@@ -1,31 +1,85 @@
+// ----- buildMetadata Function ----- //
+// @TODO: Complete the following function that builds the metadata panel
 function buildMetadata(sample) {
-
-  // @TODO: Complete the following function that builds the metadata panel
+  var url = `/metadata/${sample}`;
+  console.log("buildMetadata() initiated...");
 
   // Use `d3.json` to fetch the metadata for a sample
-    // Use d3 to select the panel with id of `#sample-metadata`
-
-    // Use `.html("") to clear any existing metadata
-
-    // Use `Object.entries` to add each key and value pair to the panel
-    // Hint: Inside the loop, you will need to use d3 to append new
-    // tags for each key-value in the metadata.
-
-    // BONUS: Build the Gauge Chart
-    // buildGauge(data.WFREQ);
+  d3.json(url).then(function (response) {
+      var meta_data = d3.select("#sample-metadata");
+      meta_data.html("");
+      console.log(response);
+      Object.entries(response).forEach(([key, value]) => {
+        console.log(key, value);
+        var cell = meta_data.append("li");
+            cell.html(`<b>${key}</b>: ${value} \n`);
+      });
+  });
 }
 
+// ----- buildCharts Function ----- //
 function buildCharts(sample) {
+  var url = `/samples/${sample}`;
+  console.log("buildCharts() initiated...");
+  
+  // ----- Bubble Chart ----- //
+  // Build a Bubble Chart using the sample data
+  d3.json(url).then(function (response) {
+      var sample_x = response.otu_ids;
+      var sample_y = response.sample_values;
+      var sample_text = response.otu_labels;
+      var trace1 = {
+          x: sample_x,
+          y: sample_y,
+          mode: "markers",
+          marker: {
+              size: sample_y,
+              color:  sample_x
+          },
+          text: sample_text,
+      };
 
-  // @TODO: Use `d3.json` to fetch the sample data for the plots
+      var data1 = [trace1];
+      
+      var layout1 = {
+          title: "Samples",
+          showlegend: false,
+          autosize: true
+      };
+      
+      Plotly.newPlot("bubble", data1, layout1, {
+          scrollZoom: true
+      });
+  });
 
-    // @TODO: Build a Bubble Chart using the sample data
+  // ----- Pie Chart ----- //
+  // Build a Pie Chart for the top 10 sample types
+  d3.json(url).then(function (response) {
+      var sample_labels = response.otu_ids.slice(0, 10);
+      var sample_values = response.sample_values.slice(0, 10);
+      var sample_hover = response.otu_labels.slice(0, 10);
 
-    // @TODO: Build a Pie Chart
-    // HINT: You will need to use slice() to grab the top 10 sample_values,
-    // otu_ids, and labels (10 each).
+      var trace2 = {
+          labels: sample_labels,
+          values: sample_values,
+          hovertext: sample_hover,
+          hoverinfo: "hovertext",
+          textposition: "outside",
+          type: "pie"
+      };
+      
+      var data2 = [trace2];
+      
+      var layout2 = {
+          title: "Top 10 Sample Types",
+          autosize: true
+      };
+      
+      Plotly.newPlot("pie", data2, layout2);
+  });
 }
 
+// ----- initial function ----- //
 function init() {
   // Grab a reference to the dropdown select element
   var selector = d3.select("#selDataset");
